@@ -53,28 +53,17 @@ jobs:
           args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
 
       - name: Run the maven packaging
-        run: mvn clean package
+        run: |
+          mvn clean package
+          mv target/my-web-app.war target/${{ matrix.environment }}.war
       - name: Archive WAR file
         uses: actions/upload-artifact@v4
         with:
           name: war-file-${{ matrix.environment }}
           path: target/*.war
-  deploy:
-    strategy:
-      matrix:
-        environment: [ sm, macdo, jollibee ]
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download war files
-        uses: actions/download-artifact@v4
-        with:
-          name: war-file-${{ matrix.environment }}
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Configure Maven settings
+      - name: Publish war file to Github Packages
+        run: |
+      - name: Configure Maven settings for GitHub Packages
         run: |
           echo "<settings>
                   <servers>
@@ -86,8 +75,28 @@ jobs:
                   </servers>
                 </settings>" > $GITHUB_WORKSPACE/settings.xml
 
-      - name: Publish WAR to GitHub Packages
-        run: mvn deploy --settings $GITHUB_WORKSPACE/settings.xml
+      - name: Publish ZIP to GitHub Packages
+        run: mvn deploy:deploy-file \
+          -DgroupId=com.example.webapp \
+          -DartifactId=my-web-app \
+          -Dversion=1.0.0-SNAPSHOT \
+          -Dpackaging=war \
+          -Dfile=target/${{ matrix.environment }}.zip \
+          -DrepositoryId=github \
+          -Durl=https://maven.pkg.github.com/Britana-Solutions/demo-java-app
+          #  deploy:
+#    strategy:
+#      matrix:
+#        environment: [ sm, macdo, jollibee ]
+#    runs-on: ubuntu-latest
+#    needs: build
+#    steps:
+#      - name: Download war files
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: war-file-${{ matrix.environment }}
+#      - name: Publish WAR to GitHub Packages
+#        run: mvn deploy --settings $GITHUB_WORKSPACE/settings.xml
 #      - name: Configure AWS Credentials
 #        uses: aws-actions/configure-aws-credentials@v4
 #        with:
