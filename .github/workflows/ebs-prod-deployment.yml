@@ -17,9 +17,41 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Update database credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+      - name: Fetch parameters from AWS
         run: |
-          echo "Update db credentials for ${{ matrix.environment }}"
+          DBURL=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBURL"  \
+              --query "Parameter.Value" --output text --with-decryption)
+          echo "DBURL=${DBURL}" >> $GITHUB_OUTPUT
+          
+          DBUSER=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBUSER"  \
+              --query "Parameter.Value" --output text --with-decryption)
+          echo "DBUSER=${DBUSER}" >> $GITHUB_OUTPUT
+          
+          DBPASS=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBPASS"  \
+              --query "Parameter.Value" --output text --with-decryption)
+          echo "DBPASS=${DBPASS}" >> $GITHUB_OUTPUT
+
+      - name: Update DBURL
+        uses: Mudlet/xmlstarlet-action@master
+        with:
+          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
+
+      - name: Update DBUSER
+        uses: Mudlet/xmlstarlet-action@master
+        with:
+          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
+
+      - name: Update DBPASS
+        uses: Mudlet/xmlstarlet-action@master
+        with:
+          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
+
       - name: Run the maven packaging
         run: mvn clean package
       - name: Archive WAR file
@@ -38,28 +70,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: war-file-${{ matrix.environment }}
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/setup-java@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-2
-#          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-#          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-#          role-duration-seconds: 1200
-#          role-session-name: MySessionName
-      - name: Upload war file to S3
-        run: |
-          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
-      - name: Create EB app version
-        run: |
-          aws elasticbeanstalk create-application-version \
-            --application-name java-demo \
-            --version-label ${{ matrix.environment }}.${{ github.sha }} \
-            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.war" \
-            --description "Deploying ${{ github.sha }}"
-#      - name: Update EB environment
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Publish WAR to GitHub Packages
+        run: mvn deploy --settings .github/maven-settings.xml
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: ap-southeast-2
+##          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+##          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+##          role-duration-seconds: 1200
+##          role-session-name: MySessionName
+#      - name: Upload war file to S3
 #        run: |
-#          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
+#          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
+#      - name: Create EB app version
+#        run: |
+#          aws elasticbeanstalk create-application-version \
+#            --application-name java-demo \
+#            --version-label ${{ matrix.environment }}.${{ github.sha }} \
+#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.war" \
+#            --description "Deploying ${{ github.sha }}"
+##      - name: Update EB environment
+##        run: |
+##          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
           
 
