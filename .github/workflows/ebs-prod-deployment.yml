@@ -40,17 +40,17 @@ jobs:
       - name: Update DBURL
         uses: Mudlet/xmlstarlet-action@master
         with:
-          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
+          args: ed -u '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
 
       - name: Update DBUSER
         uses: Mudlet/xmlstarlet-action@master
         with:
-          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
+          args: ed -u '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
 
       - name: Update DBPASS
         uses: Mudlet/xmlstarlet-action@master
         with:
-          args: ed -up '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
+          args: ed -u '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
 
       - name: Run the maven packaging
         run: mvn clean package
