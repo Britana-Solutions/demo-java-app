@@ -6,7 +6,7 @@
   <display-name>Archetype Created Web Application</display-name>
   <servlet>
     <servlet-name>HelloWorldServlet</servlet-name>
-    <servlet-class>com.example.webapp.HelloWorldServlet</servlet-class>
+    <servlet-class>com.example.HelloWorldServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>HelloWorldServlet</servlet-name>
