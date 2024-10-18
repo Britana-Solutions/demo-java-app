@@ -11,11 +11,12 @@ jobs:
       matrix:
         environment: [ sm, macdo, jollibee ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read  # Required to read repository contents
-      packages: write  # Required to publish packages
     steps:
       - uses: actions/checkout@v4
+      - name: Install xmlstarlet
+        run: sudo apt-get update && sudo apt-get install -y xmlstarlet
+      - name: Run xmlstarlet command
+        run: xmlstarlet --version
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -27,36 +28,55 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
       - name: Fetch parameters from AWS
+        id: params
         run: |
           DBURL=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBURL"  \
               --query "Parameter.Value" --output text --with-decryption)
-          echo "DBURL=${DBURL}" >> $GITHUB_OUTPUT
+
+          xmlstarlet ed --inplace \
+            --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' \
+            -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
           
           DBUSER=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBUSER"  \
               --query "Parameter.Value" --output text --with-decryption)
-          echo "DBUSER=${DBUSER}" >> $GITHUB_OUTPUT
+               
+          xmlstarlet ed --inplace \
+             --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' \
+             -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"               
           
           DBPASS=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBPASS"  \
               --query "Parameter.Value" --output text --with-decryption)
-          echo "DBPASS=${DBPASS}" >> $GITHUB_OUTPUT
+             
+          xmlstarlet ed --inplace \
+             --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' \
+             -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
+               
+          cat src/main/resources/hibernate.cfg.xml
 
-      - name: Update DBURL
-        uses: Mudlet/xmlstarlet-action@master
-        with:
-          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
-
-      - name: Update DBUSER
-        uses: Mudlet/xmlstarlet-action@master
-        with:
-          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
-
-      - name: Update DBPASS
-        uses: Mudlet/xmlstarlet-action@master
-        with:
-          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
+#      - name: Update DBURL
+#        uses: Mudlet/xmlstarlet-action@master
+#        with:
+#          args: ed --inplace --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "${{ steps.params.outputs.DBURL }}" "src/main/resources/hibernate.cfg.xml"
+#
+#      - name: Did the field change?
+#        run: |
+#          echo ${{ steps.params.outputs.DBURL }}
+#          cat src/main/resources/hibernate.cfg.xml
+#
+#      - name: Update DBUSER
+#        uses: Mudlet/xmlstarlet-action@master
+#        with:
+#          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
+#
+#      - name: Update DBPASS
+#        uses: Mudlet/xmlstarlet-action@master
+#        with:
+#          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
 
       - name: Run the maven packaging
-        run: mvn clean package
+        run: |
+          cat src/main/resources/hibernate.cfg.xml
+          mvn clean package
       - name: Archive WAR file
         uses: actions/upload-artifact@v4
         with:
