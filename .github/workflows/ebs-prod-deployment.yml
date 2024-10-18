@@ -12,6 +12,9 @@ jobs:
 #        environment: [ sm, macdo, jollibee ]
         environment: [ sm ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to read repository contents
+      packages: write  # Required to publish packages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
