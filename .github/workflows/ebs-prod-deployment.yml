@@ -55,13 +55,14 @@ jobs:
 
       - name: Run the maven packaging
         run: |
-          mvn clean package
+          mvn package --file pom.xml
+#          mvn clean package
 #          mv target/my-web-app.war target/${{ matrix.environment }}.war
-      - name: Archive WAR file
-        uses: actions/upload-artifact@v4
-        with:
-          name: war-file-${{ matrix.environment }}
-          path: target/*.war
+#      - name: Archive WAR file
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: war-file-${{ matrix.environment }}
+#          path: target/*.war
       - name: Publish war file to Github Packages
         run: mvn deploy --settings .github/settings.xml
 
