@@ -20,7 +20,9 @@ public class HelloWorldServlet extends HttpServlet {
 
         // Retrieve a property value
         String dbUrl = configuration.getProperty("hibernate.connection.url");
-        response.getWriter().println(String.format("<span>%s</span>", dbUrl));
+        String dbUser = configuration.getProperty("hibernate.connection.username");
+        response.getWriter().println(String.format("<span>DBURL: %s</span>", dbUrl));
+        response.getWriter().println(String.format("<span>DBUSER: %s</span>", dbUser));
 
     }
 }
