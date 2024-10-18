@@ -9,7 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        environment: [ sm, macdo, jollibee ]
+#        environment: [ sm, macdo, jollibee ]
+        environment: [ sm ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,36 +56,16 @@ jobs:
       - name: Run the maven packaging
         run: |
           mvn clean package
-          mv target/my-web-app.war target/${{ matrix.environment }}.war
+#          mv target/my-web-app.war target/${{ matrix.environment }}.war
       - name: Archive WAR file
         uses: actions/upload-artifact@v4
         with:
           name: war-file-${{ matrix.environment }}
           path: target/*.war
       - name: Publish war file to Github Packages
-        run: |
-      - name: Configure Maven settings for GitHub Packages
-        run: |
-          echo "<settings>
-                  <servers>
-                    <server>
-                      <id>github</id>
-                      <username>${{ github.actor }}</username>
-                      <password>${{ secrets.GITHUB_TOKEN }}</password>
-                    </server>
-                  </servers>
-                </settings>" > $GITHUB_WORKSPACE/settings.xml
+        run: mvn deploy --settings .github/settings.xml
 
-      - name: Publish ZIP to GitHub Packages
-        run: mvn deploy:deploy-file \
-          -DgroupId=com.example.webapp \
-          -DartifactId=my-web-app \
-          -Dversion=1.0.0-SNAPSHOT \
-          -Dpackaging=war \
-          -Dfile=target/${{ matrix.environment }}.zip \
-          -DrepositoryId=github \
-          -Durl=https://maven.pkg.github.com/Britana-Solutions/demo-java-app
-          #  deploy:
+#  deploy:
 #    strategy:
 #      matrix:
 #        environment: [ sm, macdo, jollibee ]
