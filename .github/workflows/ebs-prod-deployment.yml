@@ -27,8 +27,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
-      - name: Fetch parameters from AWS
-        id: params
+      - name: Maven packaging
         run: |
           DBURL=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBURL"  \
               --query "Parameter.Value" --output text --with-decryption)
@@ -51,32 +50,8 @@ jobs:
              --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' \
              -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
                
-          cat src/main/resources/hibernate.cfg.xml
-
-#      - name: Update DBURL
-#        uses: Mudlet/xmlstarlet-action@master
-#        with:
-#          args: ed --inplace --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' -v "${{ steps.params.outputs.DBURL }}" "src/main/resources/hibernate.cfg.xml"
-#
-#      - name: Did the field change?
-#        run: |
-#          echo ${{ steps.params.outputs.DBURL }}
-#          cat src/main/resources/hibernate.cfg.xml
-#
-#      - name: Update DBUSER
-#        uses: Mudlet/xmlstarlet-action@master
-#        with:
-#          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"
-#
-#      - name: Update DBPASS
-#        uses: Mudlet/xmlstarlet-action@master
-#        with:
-#          args: ed -L --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
-
-      - name: Run the maven packaging
-        run: |
-          cat src/main/resources/hibernate.cfg.xml
           mvn clean package
+
       - name: Archive WAR file
         uses: actions/upload-artifact@v4
         with:
