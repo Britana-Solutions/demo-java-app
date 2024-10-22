@@ -1,8 +1,8 @@
 name: Deploy application to Production
 
 on:
-  schedule:
-    - cron: '0 2 * * *'  # UTC based
+#  schedule:
+#    - cron: '0 2 * * *'  # UTC based
   push:
     branches: [ "main" ]
 
