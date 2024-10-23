@@ -59,17 +59,18 @@ jobs:
           name: war-file-${{ matrix.environment }}
           path: target/*.war
 
-#  deploy:
-#    strategy:
-#      matrix:
-#        environment: [ sm, macdo, jollibee ]
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - name: Download war files
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: war-file-${{ matrix.environment }}
+  deploy:
+    environment: Production
+    strategy:
+      matrix:
+        environment: [ sm, macdo, jollibee ]
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download war files
+        uses: actions/download-artifact@v4
+        with:
+          name: war-file-${{ matrix.environment }}
 #      - name: Configure AWS Credentials
 #        uses: aws-actions/configure-aws-credentials@v4
 #        with:
