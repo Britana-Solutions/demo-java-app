@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-staging:
+  build:
     strategy:
       matrix:
         target: ["staging"]
