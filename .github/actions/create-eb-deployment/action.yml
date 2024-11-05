@@ -1,0 +1,38 @@
+name: 'Create elasticbeanstalk deployment'
+description: 'Create elasticbeanstalk deployment'
+inputs:
+  environment-name:
+    description: 'Environment name'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Create ssm configuration
+      shell: bash
+      run: |
+        cat <<-EOF > .ebextensions/ssm.config
+        option_settings:
+          aws:elasticbeanstalk:application:environment:
+            DBURL: '{{resolve:ssm:/${{ matrix.environment }}/DBURL:1}}'
+            DBUSER: '{{resolve:ssm:/${{ matrix.environment }}/DBUSER:1}}'
+            DBPASS: '{{resolve:ssm:/${{ matrix.environment }}/DBPASS:1}}'
+        EOF
+    - name: Maven and deployment packaging
+      shell: bash
+      run: |
+        [ ! -f .ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
+            
+        cat .ebextensions/ssm.config
+            
+        mvn clean package
+        zip -r deploy.zip .ebextensions target/*.war
+
+    - name: Archive deploy file
+      uses: actions/upload-artifact@v4
+      with:
+        name: deploy-file-${{ matrix.environment }}
+        path: deploy.zip
