@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-prod:
+  build:
     strategy:
       matrix:
         environment: [ sm, macdo, jollibee ]
@@ -18,103 +18,19 @@ jobs:
         with:
           environment-name: ${{ matrix.environment }}
 
-#      - uses: actions/setup-java@v4
-#        with:
-#          java-version: '17'
-#          distribution: 'temurin'
-#      - name: Create ssm configuration
-#        run: |
-#          cat <<-EOF > .ebextensions/ssm.config
-#            option_settings:
-#              aws:elasticbeanstalk:application:environment:
-#                DBURL: '{{resolve:ssm:/${{ matrix.environment }}/DBURL:1}}'
-#                DBUSER: '{{resolve:ssm:/${{ matrix.environment }}/DBUSER:1}}'
-#                DBPASS: '{{resolve:ssm:/${{ matrix.environment }}/DBPASS:1}}'
-#          EOF
-#
-#      - name: Maven and deployment packaging
-#        run: |
-#          [ ! -f .ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
-#
-#          cat .ebextensions/ssm.config
-#
-#          mvn clean package
-#          zip -r deploy.zip .ebextensions target/*.war
-#
-#      - name: Archive deploy file
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: deploy-file-${{ matrix.environment }}
-#          path: deploy.zip
-
-#  deploy:
-#    strategy:
-#      matrix:
-#        environment: [ sm, macdo, jollibee ]
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - name: Download war files
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: war-file-${{ matrix.environment }}
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: ap-southeast-2
-##          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-#  deploy:
-#    strategy:
-#      matrix:
-#        environment: [ sm, macdo, jollibee ]
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - name: Download war files
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: war-file-${{ matrix.environment }}
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: ap-southeast-2
-##          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-##          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-##          role-duration-seconds: 1200
-##          role-session-name: MySessionName
-#      - name: Upload war file to S3
-#        run: |
-#          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
-#      - name: Create EB app version
-#        run: |
-#          aws elasticbeanstalk create-application-version \
-#            --application-name java-demo \
-#            --version-label ${{ matrix.environment }}.${{ github.sha }} \
-#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.zip" \
-#            --description "Deploying ${{ github.sha }}"
-##      - name: Update EB environment
-##        run: |
-##          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
-
-##          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-##          role-duration-seconds: 1200
-##          role-session-name: MySessionName
-#      - name: Upload war file to S3
-#        run: |
-#          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
-#      - name: Create EB app version
-#        run: |
-#          aws elasticbeanstalk create-application-version \
-#            --application-name java-demo \
-#            --version-label ${{ matrix.environment }}.${{ github.sha }} \
-#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.war" \
-#            --description "Deploying ${{ github.sha }}"
-##      - name: Update EB environment
-##        run: |
-##          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
-
+  deploy:
+    environment: STAGING
+    strategy:
+      matrix:
+        environment: [ staging ]
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/push-deployment-to-eb
+        with:
+          environment: ${{ matrix.environment }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
 

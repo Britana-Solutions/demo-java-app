@@ -15,12 +15,9 @@ public class HelloWorldServlet extends HttpServlet {
         response.setContentType("text/html");
         response.getWriter().println("<h1>Hello from Jakarta Servlet 5.0!</h1>");
 
-        Configuration configuration = new Configuration();
-        configuration.configure(); // Loads hibernate.cfg.xml
-
         // Retrieve a property value
-        String dbUrl = configuration.getProperty("hibernate.connection.url");
-        String dbUser = configuration.getProperty("hibernate.connection.username");
+        String dbUrl = System.getenv("DBURL");
+        String dbUser = System.getenv("DBUSER");
         response.getWriter().println(String.format("<span>DBURL: %s</span>", dbUrl));
         response.getWriter().println(String.format("<span>DBUSER: %s</span>", dbUser));
 

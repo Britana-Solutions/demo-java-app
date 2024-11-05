@@ -1,7 +1,7 @@
 name: 'Create elasticbeanstalk deployment'
 description: 'Create elasticbeanstalk deployment'
 inputs:
-  environment-name:
+  environment:
     description: 'Environment name'
     required: true
 runs:
@@ -11,28 +11,29 @@ runs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Create ssm configuration
-      shell: bash
-      run: |
-        cat <<-EOF > .ebextensions/ssm.config
-        option_settings:
-          aws:elasticbeanstalk:application:environment:
-            DBURL: '{{resolve:ssm:/${{ matrix.environment }}/DBURL:1}}'
-            DBUSER: '{{resolve:ssm:/${{ matrix.environment }}/DBUSER:1}}'
-            DBPASS: '{{resolve:ssm:/${{ matrix.environment }}/DBPASS:1}}'
-        EOF
+#    - name: Create ssm configuration
+#      shell: bash
+#      run: |
+#        cat <<-EOF > .ebextensions/ssm.config
+#        option_settings:
+#          aws:elasticbeanstalk:application:environment:
+#            DBURL: '{{resolve:ssm:/${{ inputs.environment }}/DBURL:1}}'
+#            DBUSER: '{{resolve:ssm:/${{ inputs.environment }}/DBUSER:1}}'
+#        EOF
+#        # DBPASS: '{{resolve:ssm-secure:/${{ inputs.environment }}/DBPASS:1}}'
     - name: Maven and deployment packaging
       shell: bash
       run: |
-        [ ! -f .ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
-            
-        cat .ebextensions/ssm.config
-            
+        # [ ! -f .ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
         mvn clean package
-        zip -r deploy.zip .ebextensions target/*.war
-
-    - name: Archive deploy file
+        # zip -r deploy.zip .ebextensions target/*.war
+#    - name: Archive deploy file
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: deploy-file-${{ inputs.environment }}
+#        path: deploy.zip
+    - name: Archive WAR file
       uses: actions/upload-artifact@v4
       with:
-        name: deploy-file-${{ matrix.environment }}
-        path: deploy.zip
+        name: deploy-file-${{ inputs.environment }}
+        path: target/*.war
