@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
+
 import org.hibernate.cfg.Configuration;
 
 public class HelloWorldServlet extends HttpServlet {
@@ -16,10 +18,9 @@ public class HelloWorldServlet extends HttpServlet {
         response.getWriter().println("<h1>Hello from Jakarta Servlet 5.0!</h1>");
 
         // Retrieve a property value
-        String dbUrl = System.getenv("DBURL");
-        String dbUser = System.getenv("DBUSER");
+        String dbUrl = System.getProperty("DBURL");
+        String dbUser = System.getProperty("DBUSER");
         response.getWriter().println(String.format("<span>DBURL: %s</span>", dbUrl));
-        response.getWriter().println(String.format("<span>DBUSER: %s</span>", dbUser));
-
+        response.getWriter().println(String.format("<span>DBUSER: %s</span><br>", dbUser));
     }
 }

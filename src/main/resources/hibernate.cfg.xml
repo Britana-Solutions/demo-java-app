@@ -4,9 +4,9 @@
     <session-factory>
         <!-- Database connection settings -->
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
-        <property name="hibernate.connection.url">${env.DBURL}</property>
-        <property name="hibernate.connection.username">${env.DBUSER}</property>
-        <property name="hibernate.connection.password">${env.DBPASS}</property>
+        <property name="hibernate.connection.url">${DBURL}</property>
+        <property name="hibernate.connection.username">${DBUSER}</property>
+        <property name="hibernate.connection.password">${DBPASS}</property>
 
         <!-- Specify dialect -->
         <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
