@@ -19,8 +19,8 @@ runs:
           aws:elasticbeanstalk:application:environment:
             DBURL: '{{resolve:ssm:/${{ inputs.environment }}/DBURL:1}}'
             DBUSER: '{{resolve:ssm:/${{ inputs.environment }}/DBUSER:1}}'
+            DBPASS: '{{resolve:ssm:/${{ inputs.environment }}/DBPASS:1}}'
         EOF
-        # DBPASS: '{{resolve:ssm-secure:/${{ inputs.environment }}/DBPASS:1}}'
     - name: Maven and deployment packaging
       shell: bash
       run: |

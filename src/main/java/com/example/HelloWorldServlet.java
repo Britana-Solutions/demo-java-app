@@ -20,7 +20,9 @@ public class HelloWorldServlet extends HttpServlet {
         // Retrieve a property value
         String dbUrl = System.getProperty("DBURL");
         String dbUser = System.getProperty("DBUSER");
-        response.getWriter().println(String.format("<span>DBURL: %s</span>", dbUrl));
+        String dbPass = System.getProperty("DBPASS");
+        response.getWriter().println(String.format("<span>DBURL: %s</span><br>", dbUrl));
         response.getWriter().println(String.format("<span>DBUSER: %s</span><br>", dbUser));
+        response.getWriter().println(String.format("<span>DBPASS: %s</span><br>", dbPass));
     }
 }
