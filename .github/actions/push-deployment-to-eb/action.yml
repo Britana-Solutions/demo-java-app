@@ -18,35 +18,6 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: deploy-file-${{ inputs.environment }}
-#    - name: Configure AWS Credentials
-#      uses: aws-actions/configure-aws-credentials@v4
-#      with:
-#        aws-access-key-id: ${{ inputs.aws-access-key-id }}
-#        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-#        aws-region: ${{ inputs.aws-region }}
-#          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-#          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-#          role-duration-seconds: 1200
-#          role-session-name: MySessionName
-#    - name: Upload deploy file to S3
-#      shell: bash
-#      run: |
-#        aws s3 cp deploy.zip \
-#          s3://java-demo-deployment/${{ inputs.environment }}-${{ github.sha }}.zip
-#    - name: Create EB app version
-#      shell: bash
-#      run: |
-#        aws elasticbeanstalk create-application-version \
-#            --application-name java-demo \
-#            --version-label ${{ inputs.environment }}.${{ github.sha }} \
-#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ inputs.environment }}-${{ github.sha }}.zip" \
-#            --description "Deploying ${{ github.sha }}"
-#    - name: Update EB environment
-#      shell: bash
-#      run: |
-#        aws elasticbeanstalk update-environment \
-#          --environment-name java-demo-env \
-#          --version-label ${{ inputs.environment }}.${{ github.sha }}
     - name: Deploy to EB
       uses: einaregilsson/beanstalk-deploy@v22
       with:

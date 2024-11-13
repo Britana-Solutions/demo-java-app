@@ -11,20 +11,20 @@ runs:
       with:
         java-version: '17'
         distribution: 'temurin'
-#    - name: Create ssm configuration
-#      shell: bash
-#      run: |
-#        cat <<-EOF > src/main/.ebextensions/ssm.config
-#        option_settings:
-#          aws:elasticbeanstalk:application:environment:
-#            DBURL: '{{resolve:ssm:/${{ inputs.environment }}/DBURL:1}}'
-#            DBUSER: '{{resolve:ssm:/${{ inputs.environment }}/DBUSER:1}}'
-#        EOF
-#        # DBPASS: '{{resolve:ssm-secure:/${{ inputs.environment }}/DBPASS:1}}'
+    - name: Create ssm configuration
+      shell: bash
+      run: |
+        cat <<-EOF > src/main/.ebextensions/ssm.config
+        option_settings:
+          aws:elasticbeanstalk:application:environment:
+            DBURL: '{{resolve:ssm:/${{ inputs.environment }}/DBURL:1}}'
+            DBUSER: '{{resolve:ssm:/${{ inputs.environment }}/DBUSER:1}}'
+        EOF
+        # DBPASS: '{{resolve:ssm-secure:/${{ inputs.environment }}/DBPASS:1}}'
     - name: Maven and deployment packaging
       shell: bash
       run: |
-        # [ ! -f src/main/.ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
+        [ ! -f src/main/.ebextensions/ssm.config ] && echo "SSM configuration not created" && exit 1
         mvn clean package
 #    - name: Archive deploy file
 #      uses: actions/upload-artifact@v4
