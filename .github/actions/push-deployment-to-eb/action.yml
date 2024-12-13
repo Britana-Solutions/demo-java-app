@@ -1,0 +1,50 @@
+name: 'Create elasticbeanstalk deployment'
+description: 'Create elasticbeanstalk deployment'
+inputs:
+  target:
+    description: 'Deployment target'
+    required: true
+  aws-access-key-id:
+    description: 'AWS access key id'
+  aws-secret-access-key:
+    description: 'AWS secret access key'
+  aws-region:
+    description: 'AWS region'
+    default: ap-southeast-1
+  application-name-prefix:
+    description: 'AWS elastic beanstalk application name prefix'
+    required: true
+  environment-name-prefix:
+    description: 'AWS elastic beanstalk environment name prefix'
+    required: true
+  package-filename:
+    description: 'Package name to be used for deployment'
+    required: true
+  wait-for-eb-deployment:
+    description: "Flag to indicate if github deployment waits for eb deployment"
+    type: boolean
+    default: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download deploy file
+      uses: actions/download-artifact@v4
+      with:
+        name: deploy-file-${{ inputs.target }}
+    - name: Fetch short git sha value
+      id: gitshortsha
+      shell: bash
+      run: |
+        echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+#    - name: Deploy to EB
+#      uses: einaregilsson/beanstalk-deploy@v22
+#      with:
+#        aws_access_key: ${{ inputs.aws-access-key-id }}
+#        aws_secret_key: ${{ inputs.aws-secret-access-key }}
+#        application_name: ${{ inputs.application-name-prefix }}-APP
+#        environment_name: ${{ inputs.environment-name-prefix }}-ENV
+#        version_label: BTC.${{ steps.gitshortsha.outputs.short_sha }}
+#        region: ${{ inputs.aws-region }}
+#        deployment_package: ${{ inputs.package-filename }}
+#        wait_for_deployment: ${{ inputs.wait-for-eb-deployment }}
+
