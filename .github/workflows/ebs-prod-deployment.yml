@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/create-eb-deployment
         with:
-          environment: staging
+          environment: production
           target: ${{ matrix.target }}
           github-token: ${{ secrets.GH_TOKEN }}
           war-base-filename: BTC-1.0.0
@@ -54,6 +54,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/deployment-approval
         with:
+          environment: production
           branch: ${{ github.ref }}
           app-name: BGS
           github-token: ${{ secrets.GH_TOKEN }}
