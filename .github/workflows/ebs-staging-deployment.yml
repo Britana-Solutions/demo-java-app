@@ -53,6 +53,11 @@ jobs:
     needs: [ config, build ]
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/deployment-approval
+        with:
+          branch: ${{ github.ref }}
+          app-name: BGS
+          github-token: ${{ secrets.GH_TOKEN }}
       - uses: ./.github/actions/push-deployment-to-eb
         with:
           target: ${{ matrix.target }}

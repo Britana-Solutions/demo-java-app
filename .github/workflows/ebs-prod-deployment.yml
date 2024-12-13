@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.DEFAULT_BUILD_TIMEOUT) }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/build-war-file
@@ -26,6 +27,7 @@ jobs:
           BTC-300-PROD
         ]
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.DEFAULT_CONFIG_TIMEOUT) }}
     needs: build
     steps:
       - uses: actions/checkout@v4
@@ -46,9 +48,15 @@ jobs:
           BTC-300-PROD
         ]
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.DEFAULT_DEPLOY_TIMEOUT) }}
     needs: [ config, build ]
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/deployment-approval
+        with:
+          branch: ${{ github.ref }}
+          app-name: BGS
+          github-token: ${{ secrets.GH_TOKEN }}
       - uses: ./.github/actions/push-deployment-to-eb
         with:
           target: ${{ matrix.target }}
