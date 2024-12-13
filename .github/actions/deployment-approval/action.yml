@@ -1,0 +1,31 @@
+name: 'Production deployment approval gate'
+description: 'Production deployment approval gate'
+inputs:
+  environment:
+    description: 'Environment to deploy to'
+    type: string
+    required: true
+  branch:
+    description: "Git branch as source of the deployment"
+    type: string
+    required: true
+  app-name:
+    description: "Application name to be deployed"
+    type: string
+    required: true
+  github-token:
+    description: 'Github token'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ inputs.github-token }}
+        approvers: deployment-approvers
+        minimum-approvals: 1
+        issue-title: "[${{ inputs.environment }} deployment] ${{ inputs.app-name }} from ${{ inputs.branch }}"
+        issue-body: "Please approve or deny the deployment of new version of ${{ inputs.app-name }} to prod from ${{ inputs.branch }}"
+        exclude-workflow-initiator-as-approver: false
+        additional-approved-words: ''
+        additional-denied-words: 'reject'
