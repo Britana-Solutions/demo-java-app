@@ -10,6 +10,9 @@ inputs:
   target:
     description: 'Deployment target'
     required: true
+  war-base-filename:
+    description: 'War base filename'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -34,9 +37,10 @@ runs:
             _AWS_KEY: '{{resolve:ssm:/${{ inputs.target }}/_AWS_KEY:1}}'
             _AWS_SECRET: '{{resolve:ssm:/${{ inputs.target }}/_AWS_SECRET:1}}'
         EOF
+        mv BTC-1.0.0.war BTC-1.0.0-${{ inputs.target }}.war
         jar uf *.war .ebextensions/ssm.config
     - name: Archive WAR file
       uses: actions/upload-artifact@v4
       with:
         name: deploy-file-${{ inputs.target }}
-        path: '*.war'
+        path: BTC-1.0.0-${{ inputs.target }}.war
