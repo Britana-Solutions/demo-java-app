@@ -34,7 +34,7 @@ runs:
             _AWS_KEY: '{{resolve:ssm:/${{ inputs.target }}/_AWS_KEY:1}}'
             _AWS_SECRET: '{{resolve:ssm:/${{ inputs.target }}/_AWS_SECRET:1}}'
         EOF
-        jar uf BTC-1.0.0.war .ebextensions/ssm.config
+        jar uf *.war .ebextensions/ssm.config
     - name: Archive WAR file
       uses: actions/upload-artifact@v4
       with:
