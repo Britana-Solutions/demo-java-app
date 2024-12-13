@@ -1,0 +1,28 @@
+name: 'Create elasticbeanstalk deployment'
+description: 'Create elasticbeanstalk deployment'
+inputs:
+  environment:
+    description: 'Environment name'
+    required: true
+  github-token:
+    description: 'Github token'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    - name: Maven and deployment packaging
+      shell: bash
+      run: |
+        mvn dependency:resolve
+        mvn clean package
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+    - name: Archive WAR file
+      uses: actions/upload-artifact@v4
+      with:
+        name: deploy-file-${{ inputs.environment }}
+        path: target/*.war

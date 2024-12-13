@@ -3,129 +3,63 @@ name: Deploy application to Staging
 on:
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '.github/workflows/ebs-prod-deployment.yml'
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   build:
-    strategy:
-      matrix:
-        environment: [ staging ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install xmlstarlet
-        run: sudo apt-get update && sudo apt-get install -y xmlstarlet
-      - name: Run xmlstarlet command
-        run: xmlstarlet --version
-      - uses: actions/setup-java@v4
+      - uses: ./.github/actions/build-war-file
         with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-2
-      - name: Maven packaging
-        run: |
-          DBURL=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBURL"  \
-              --query "Parameter.Value" --output text --with-decryption)
+          environment: staging
+          github-token: ${{ secrets.GH_TOKEN }}
 
-          xmlstarlet ed --inplace \
-            --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.url"]' \
-            -v "$DBURL" "src/main/resources/hibernate.cfg.xml"
-          
-          DBUSER=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBUSER"  \
-              --query "Parameter.Value" --output text --with-decryption)
-               
-          xmlstarlet ed --inplace \
-             --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.username"]' \
-             -v "$DBUSER" "src/main/resources/hibernate.cfg.xml"               
-          
-          DBPASS=$(aws ssm get-parameter --name "/${{ matrix.environment }}/DBPASS"  \
-              --query "Parameter.Value" --output text --with-decryption)
-             
-          xmlstarlet ed --inplace \
-             --update '/hibernate-configuration/session-factory/property[@name="hibernate.connection.password"]' \
-             -v "$DBPASS" "src/main/resources/hibernate.cfg.xml"
-               
-          mvn clean package
-
-      - name: Archive WAR file
-        uses: actions/upload-artifact@v4
+  config:
+    strategy:
+      matrix:
+        target: [
+          BTC-100-TEST,
+          BTC-200-TEST,
+          BTC-300-TEST
+        ]
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/create-eb-deployment
         with:
-          name: war-file-${{ matrix.environment }}
-          path: target/*.war
+          environment: staging
+          target: ${{ matrix.target }}
+          github-token: ${{ secrets.GH_TOKEN }}
+          war-base-filename: BTC-1.0.0
 
   deploy:
     environment: STAGING
     strategy:
       matrix:
-        environment: [ staging ]
+        target: [
+          BTC-100-TEST,
+          BTC-200-TEST,
+          BTC-300-TEST
+        ]
     runs-on: ubuntu-latest
-    needs: build
+    needs: [ config, build ]
     steps:
-      - name: Download war files
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/push-deployment-to-eb
         with:
-          name: war-file-${{ matrix.environment }}
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: ap-southeast-2
-##          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-#  deploy:
-#    strategy:
-#      matrix:
-#        environment: [ sm, macdo, jollibee ]
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - name: Download war files
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: war-file-${{ matrix.environment }}
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: ap-southeast-2
-##          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-##          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-##          role-duration-seconds: 1200
-##          role-session-name: MySessionName
-#      - name: Upload war file to S3
-#        run: |
-#          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
-#      - name: Create EB app version
-#        run: |
-#          aws elasticbeanstalk create-application-version \
-#            --application-name java-demo \
-#            --version-label ${{ matrix.environment }}.${{ github.sha }} \
-#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.war" \
-#            --description "Deploying ${{ github.sha }}"
-##      - name: Update EB environment
-##        run: |
-##          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
-
-##          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
-##          role-duration-seconds: 1200
-##          role-session-name: MySessionName
-#      - name: Upload war file to S3
-#        run: |
-#          aws s3 cp my-web-app.war s3://java-demo-deployment/${{ matrix.environment }}-${{ github.sha }}.war
-#      - name: Create EB app version
-#        run: |
-#          aws elasticbeanstalk create-application-version \
-#            --application-name java-demo \
-#            --version-label ${{ matrix.environment }}.${{ github.sha }} \
-#            --source-bundle "S3Bucket=java-demo-deployment,S3Key=${{ matrix.environment }}-${{ github.sha }}.war" \
-#            --description "Deploying ${{ github.sha }}"
-##      - name: Update EB environment
-##        run: |
-##          aws elasticbeanstalk update-environment --environment-name Java-demo-dev-env --version-label ${{ github.sha }}
-
-
+          target: ${{ matrix.target }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-1
+          application-name-prefix: ${{ matrix.target }}
+          environment-name-prefix: ${{ matrix.target }}
+          package-filename: BTC-1.0.0-${{ matrix.target }}.war
+          wait-for-eb-deployment: false
